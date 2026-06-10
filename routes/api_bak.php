@@ -13,4 +13,3 @@ Route::apiResource(
     'hotels',
     HotelController::class
 );
-
