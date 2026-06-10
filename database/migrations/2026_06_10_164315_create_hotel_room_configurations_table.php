@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('hotel_id')->constrained()->cascadeOnDelete();
             $table->foreignId('room_type_id')->constrained()->cascadeOnDelete();
-            $table->constrained('accommodation_id')->cascadeOnDelete();
+            $table->foreignId('accommodation_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('quantity');
             $table->timestamps();
 
