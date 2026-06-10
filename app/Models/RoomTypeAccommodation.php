@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RoomTypeAccomodation extends Model
+class RoomTypeAccommodation extends Model
 {
     //
 }
