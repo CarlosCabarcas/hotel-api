@@ -5,13 +5,22 @@ namespace App\Services;
 use  App\Models\Hotel;
 use App\Models\RoomType;
 use Illuminate\Support\Facades\DB;
-use App\Exceptions\DuplicateRoomConfigurationException;
+use App\Services\Validators\DuplicateConfigurationValidator;
+use App\Services\Validators\RoomLimitValidator;
+use App\Services\Validators\AccommodationValidator;
 use App\Exceptions\RoomLimitExceededException;
 use App\Exceptions\InvalidRoomConfigurationException;
 
 
 class HotelService
 {
+    public function __construct(
+        private DuplicateConfigurationValidator $duplicateValidator,
+        private RoomLimitValidator $roomLimitValidator,
+        private AccommodationValidator $accommodationValidator
+    ) {
+    }
+
     /**
      * Create a hotel with its corresponding configurations.
      */
@@ -60,85 +69,11 @@ class HotelService
         });
     }
 
-    /**
-     * Verify that there are no duplicate combinations
-     * in the request.
-     */
-    private function validateDuplicates(array $configurations): void
-    {
-        $combinations = [];
-
-        foreach ($configurations as $configuration) {
-
-            $key =
-                $configuration['room_type_id']
-                . '-'
-                . $configuration['accommodation_id'];
-
-            if (in_array($key, $combinations)) {
-                throw new DuplicateRoomConfigurationException();
-            }
-
-            $combinations[] = $key;
-        }
-    }
-
-    /**
-     * Verify that the total number of rooms
-     * does not exceed the limit set for the hotel.
-     */
-    private function validateRoomLimit(int $totalRooms, array $configurations): void
-    {
-        $configuredRooms = collect($configurations)
-            ->sum('quantity');
-
-        if ($configuredRooms > $totalRooms) {
-            throw new RoomLimitExceededException();
-        }
-    }
-
-    /**
-     * Verify that the accommodation corresponds
-     * to the selected room type.
-     */
-    private function validateAccommodationRules(array $configurations): void
-    {
-        foreach ($configurations as $configuration) {
-
-            $roomType = RoomType::with(
-                'accommodations'
-            )->findOrFail(
-                $configuration['room_type_id']
-            );
-
-            $isAllowed =
-                $roomType
-                    ->accommodations
-                    ->contains(
-                        'id',
-                        $configuration['accommodation_id']
-                    );
-
-            if (!$isAllowed) {
-                throw new InvalidRoomConfigurationException();
-            }
-        }
-    }
-
     private function validateBusinessRules(array $data): void
     {
-        $this->validateDuplicates(
-            $data['configurations']
-        );
-
-        $this->validateAccommodationRules(
-            $data['configurations']
-        );
-
-        $this->validateRoomLimit(
-            $data['total_rooms'],
-            $data['configurations']
-        );
+        $this->duplicateValidator->validate($data['configurations']);
+        $this->accommodationValidator->validate($data['configurations']);
+        $this->roomLimitValidator->validate($data['total_rooms'], $data['configurations']);
     }
 
     private function saveConfigurations(Hotel $hotel, array $configurations): void
