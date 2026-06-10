@@ -4,6 +4,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use App\Exceptions\RoomLimitExceededException;
+use App\Exceptions\InvalidRoomConfigurationException;
+use App\Exceptions\DuplicateRoomConfigurationException;
+use Illuminate\Http\JsonResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +19,27 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+        $exceptions->render(function (RoomLimitExceededException $e): JsonResponse {
+
+                return response()->json([
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+        );
+
+        $exceptions->render(function (DuplicateRoomConfigurationException $e): JsonResponse {
+
+                return response()->json([
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+        );
+
+        $exceptions->render(function (InvalidRoomConfigurationException $e): JsonResponse {
+
+                return response()->json([
+                    'message' => $e->getMessage()
+                ], 422);
+            }
         );
     })->create();
