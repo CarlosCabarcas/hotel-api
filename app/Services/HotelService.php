@@ -17,9 +17,7 @@ class HotelService
      */
     public function create(array $data): Hotel
     {
-        $this->validateDuplicates($data['configurations']);
-        $this->validateAccommodationRules($data['configurations']);
-        $this->validateRoomLimit($data['total_rooms'], $data['configurations']);
+        $this->validateBusinessRules($data);
 
         return DB::transaction(function () use ($data){
             //create hotel
@@ -32,18 +30,7 @@ class HotelService
             ]);
 
             //create configurations for the hotel
-            foreach ($data['configurations'] as $configuration){
-                $hotel->configurations()->create([
-                    'room_type_id' =>
-                        $configuration['room_type_id'],
-
-                    'accommodation_id' =>
-                        $configuration['accommodation_id'],
-
-                    'quantity' =>
-                        $configuration['quantity']
-                ]);
-            }
+            $this->saveConfigurations($hotel, $data['configurations']);
 
             return $hotel->load([
                 'configurations.roomType',
@@ -54,9 +41,7 @@ class HotelService
 
     public function update(Hotel $hotel, array $data): Hotel
     {
-        $this->validateDuplicates($data['configurations']);
-        $this->validateAccommodationRules($data['configurations']);
-        $this->validateRoomLimit($data['total_rooms'], $data['configurations']);
+        $this->validateBusinessRules($data);
 
         return DB::transaction(function () use ($hotel,$data){
             $hotel->update([
@@ -71,14 +56,7 @@ class HotelService
             $hotel->configurations()->delete();
 
             //insert new configurations
-            foreach ($data['configurations'] as $configuration) {
-
-                $hotel->configurations()->create([
-                    'room_type_id' => $configuration['room_type_id'],
-                    'accommodation_id' => $configuration['accommodation_id'],
-                    'quantity' => $configuration['quantity']
-                ]);
-            }
+            $this->saveConfigurations($hotel, $data['configurations']);
         });
     }
 
@@ -144,6 +122,34 @@ class HotelService
             if (!$isAllowed) {
                 throw new InvalidRoomConfigurationException();
             }
+        }
+    }
+
+    private function validateBusinessRules(array $data): void
+    {
+        $this->validateDuplicates(
+            $data['configurations']
+        );
+
+        $this->validateAccommodationRules(
+            $data['configurations']
+        );
+
+        $this->validateRoomLimit(
+            $data['total_rooms'],
+            $data['configurations']
+        );
+    }
+
+    private function saveConfigurations(Hotel $hotel, array $configurations): void
+    {
+        foreach ($configurations as $configuration) {
+
+            $hotel->configurations()->create([
+                'room_type_id' => $configuration['room_type_id'],
+                'accommodation_id' => $configuration['accommodation_id'],
+                'quantity' => $configuration['quantity']
+            ]);
         }
     }
 }
