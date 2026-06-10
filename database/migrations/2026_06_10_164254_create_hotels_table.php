@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('nit')->unique();
             $table->unsignedInteger('total_rooms');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
