@@ -14,7 +14,7 @@ class Hotel extends Model
         'total_rooms',
     ];
 
-    public function configuration()
+    public function configurations()
     {
         return $this->hasMany(HotelRoomConfiguration::class);
     }
