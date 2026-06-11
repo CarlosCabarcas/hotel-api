@@ -42,6 +42,7 @@ services:
 # Network and Volume definitions
 networks:
   laravel_network:
+    name: hotel_network
     driver: bridge
 
 volumes:
