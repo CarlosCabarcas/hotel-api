@@ -1,27 +1,37 @@
-name: Deploy React App (Build on Server)
+name: Deploy Laravel API via Docker
 
+# Trigger the workflow on push to the main branch
 on:
   push:
     branches:
-      - main # Cambia a tu rama principal si es necesario
+      - main  # <-- Change this to 'master' if your main branch is named master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            # 1. Entrar a la carpeta del proyecto en el servidor
-            cd /var/www/hotel-frontend
+            # Navigate to your project directory on the server
+            cd /var/www/hotel-api #
 
-            # 2. Descargar los últimos cambios desde GitHub
+            # Fetch latest changes from Git
             git pull origin main
 
-            # 3. Forzar la compilación de la nueva imagen y levantar el contenedor
-            docker compose up -d --build frontend
+            # Rebuild and restart the Docker containers on the server
+            docker compose down
+            docker compose up -d --build
+
+            # Optional: Ensure everything is clean and fresh
+            docker compose exec -T app php artisan config:clear
+            docker compose exec -T app php artisan view:clear
