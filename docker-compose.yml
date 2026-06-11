@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Laravel API Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_api
+    restart: always
+    ports:
+      - "8000:8000" # Maps host port 8000 to container port 8000
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env        # <-- Forces Docker to read your Laravel .env file
+    depends_on:
+      - db
+    networks:
+      - laravel_network
+
+  # PostgreSQL Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_laravel_db
+    restart: always
+    tty: true
+    expose:
+      - "5432"
+    environment:
+      # Inject the exact variables from your .env directly into Postgres
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - .env        # <-- Forces Docker to read your Laravel .env file here too
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - laravel_network
+
+# Network and Volume definitions
+networks:
+  laravel_network:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local
