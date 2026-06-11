@@ -66,6 +66,11 @@ class HotelService
 
             //insert new configurations
             $this->saveConfigurations($hotel, $data['configurations']);
+
+           return $hotel->load([
+                'configurations.roomType',
+                'configurations.accommodation'
+            ]);
         });
     }
 
