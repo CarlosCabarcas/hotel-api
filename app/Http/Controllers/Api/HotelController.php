@@ -25,14 +25,11 @@ class HotelController extends Controller
     public function index()
     {
         $hotels = Hotel::query()
-            ->latest() //sort from newest to oldest
-            ->select([
-                'id',
-                'name',
-                'city',
-                'nit',
-                'total_rooms'
+            ->with([
+                'configurations.roomType',
+                'configurations.accommodation'
             ])
+            ->latest() //sort from newest to oldest
             ->paginate(10);
 
         return HotelResource::collection($hotels);

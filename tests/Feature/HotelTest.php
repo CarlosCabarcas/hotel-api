@@ -64,6 +64,45 @@ class HotelTest extends TestCase
     }
 
     /**
+     * Verify that hotel list includes configurations by default.
+     */
+    public function test_index_includes_configurations(): void
+    {
+        $payload = [
+            'name' => 'Decameron',
+            'city' => 'Cartagena',
+            'address' => 'Centro',
+            'nit' => '123456',
+            'total_rooms' => 42,
+            'configurations' => [
+                [
+                    'room_type_id' => 1,
+                    'accommodation_id' => 1,
+                    'quantity' => 25
+                ],
+                [
+                    'room_type_id' => 2,
+                    'accommodation_id' => 3,
+                    'quantity' => 17
+                ]
+            ]
+        ];
+
+        $this->postJson(
+            '/api/hotels',
+            $payload
+        )->assertCreated();
+
+        $response = $this->getJson('/api/hotels');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.configurations.0.quantity', 25)
+            ->assertJsonPath('data.0.configurations.0.room_type.id', 1)
+            ->assertJsonPath('data.0.configurations.0.accommodation.id', 1)
+            ->assertJsonCount(2, 'data.0.configurations');
+    }
+
+    /**
      * Verify that no hotels are created
      * with duplicate NIT.
      */
